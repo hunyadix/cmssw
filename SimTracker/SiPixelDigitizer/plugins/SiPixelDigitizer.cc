@@ -304,18 +304,21 @@ SiPixelDigitizer::finalizeEvent(edm::Event& iEvent, const edm::EventSetup& iSetu
       edm::DetSet<PixelDigi> collector((*iu)->geographicalId().rawId());
       edm::DetSet<PixelDigiSimLink> linkcollector((*iu)->geographicalId().rawId());
 // #ifdef MODIFY_DIGITIZER_ALGORITHM_FOR_CLUSTER_MERGING
-      // edm::DetSet<PixelDigi> dcolLostNeighbourDigiFlagsCollector((*iu)->geographicalId().rawId());
+      edm::DetSet<PixelDigi> dcolLostNeighbourDigiFlagsCollector((*iu)->geographicalId().rawId());
 // #endif
 
       _pixeldigialgo->digitize(dynamic_cast<const PixelGeomDetUnit*>((*iu)),
                                collector.data,
+#ifdef MODIFY_DIGITIZER_ALGORITHM_FOR_CLUSTER_MERGING
+                               dcolLostNeighbourDigiFlagsCollector.data,
+#endif
                                linkcollector.data,
                                tTopo,
                                engine);
       if(collector.data.size() > 0)
       {
 #ifdef MODIFY_DIGITIZER_ALGORITHM_FOR_CLUSTER_MERGING
-        theDcolLostNeighbourPixelFlagVector.push_back(collector);
+        theDcolLostNeighbourPixelFlagVector.push_back(std::move(dcolLostNeighbourDigiFlagsCollector));
 #endif
         theDigiVector.push_back(std::move(collector));
       }

@@ -721,6 +721,9 @@ void SiPixelDigitizerAlgorithm::calculateInstlumiFactor(PileupMixingContent* puI
 //============================================================================
 void SiPixelDigitizerAlgorithm::digitize(const PixelGeomDetUnit* pixdet,
     std::vector<PixelDigi>& digis,
+#ifdef MODIFY_DIGITIZER_ALGORITHM_FOR_CLUSTER_MERGING
+    std::vector<PixelDigi>& digiDcolLostFlags,
+#endif
     std::vector<PixelDigiSimLink>& simlinks,
     const TrackerTopology *tTopo,
     CLHEP::HepRandomEngine* engine)
@@ -818,6 +821,23 @@ void SiPixelDigitizerAlgorithm::digitize(const PixelGeomDetUnit* pixdet,
   }
 
   make_digis(thePixelThresholdInE, detID, pixdet, digis, simlinks, tTopo);
+
+#ifdef MODIFY_DIGITIZER_ALGORITHM_FOR_CLUSTER_MERGING
+    std::vector<PixelDigi> digiDcolLostFlags_temp;
+    for(const auto& digi: digis)
+    {
+      int channel = digi.channel();
+      if(channelsWithDcolLostNeighbours.count(channel) == 0) // has no dcol lost neighbour
+      {
+        digiDcolLostFlags.emplace_back(channel, 0);
+      }
+      else                                                   // has at least one dcol lost neighbour
+      {
+        digiDcolLostFlags.emplace_back(channel, 1);
+      }
+    }
+    std::swap(digiDcolLostFlags_temp, digiDcolLostFlags);
+#endif
 
 #ifdef TP_DEBUG
   LogDebug("PixelDigitizer") << "[SiPixelDigitizerAlgorithm] converted " << digis.size() << " PixelDigis in DetUnit" << detID;
@@ -1770,23 +1790,18 @@ void SiPixelDigitizerAlgorithm::pixel_inefficiency(const PixelEfficiencies& eff,
       for(const auto& index_pair: neighbour_index_collection)
       {
         PixelDigi::ChannelType channel = PixelDigi::pixelToChannel(index_pair.first, index_pair.second);
-        channelsWithDcolLostNeighbours.push_back(channel);
+        channelsWithDcolLostNeighbours.insert(channel);
       }
       i -> second.set(0.); // reset amplitude,
     } // end dcol loss if
 #else
     if(chips[chipIndex]==0 || columns[dColInDet]==0 || rand>pixelEfficiency)
     {
-      // make pixel amplitude =0, pixel will be lost at clusterization
+      // make pixel amplitude = 0, pixel will be lost at clusterization
       i->second.set(0.); // reset amplitude,
     } // end if
 #endif
   } // end pixel loop
-#ifdef MODIFY_DIGITIZER_ALGORITHM_FOR_CLUSTER_MERGING
-  // Making sure that each channel is only stored once by filtering non-unique elements
-  std::sort(channelsWithDcolLostNeighbours.begin(), channelsWithDcolLostNeighbours.end());
-  channelsWithDcolLostNeighbours.erase(std::unique(channelsWithDcolLostNeighbours.begin(), channelsWithDcolLostNeighbours.end()), channelsWithDcolLostNeighbours.end());
-#endif
 } // end pixel_indefficiency
 
 //***************************************************************************************

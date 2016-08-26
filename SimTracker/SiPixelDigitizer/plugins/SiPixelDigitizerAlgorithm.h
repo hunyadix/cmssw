@@ -70,6 +70,9 @@ public:
                          CLHEP::HepRandomEngine*);
   void digitize(const PixelGeomDetUnit *pixdet,
                 std::vector<PixelDigi>& digis,
+#ifdef MODIFY_DIGITIZER_ALGORITHM_FOR_CLUSTER_MERGING
+                std::vector<PixelDigi>& digiDcolLostFlags,
+#endif
                 std::vector<PixelDigiSimLink>& simlinks,
                 const TrackerTopology *tTopo,
                 CLHEP::HepRandomEngine*);
@@ -324,8 +327,7 @@ private:
   // Contains the accumulated hit info.
   signalMaps _signal;
 #ifdef MODIFY_DIGITIZER_ALGORITHM_FOR_CLUSTER_MERGING
-  std::vector<int> channelsWithDcolLostNeighbours;
-  std::vector<PixelDigi> digiDcolLostFlags;
+  std::set<int> channelsWithDcolLostNeighbours;
 #endif
 
   const bool makeDigiSimLinks_;
