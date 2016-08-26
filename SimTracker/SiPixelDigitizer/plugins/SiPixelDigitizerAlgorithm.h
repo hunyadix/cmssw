@@ -1,6 +1,8 @@
 #ifndef SiPixelDigitizerAlgorithm_h
 #define SiPixelDigitizerAlgorithm_h
 
+#define MODIFY_DIGITIZER_ALGORITHM_FOR_CLUSTER_MERGING
+
 #include <map>
 #include <memory>
 #include <vector>

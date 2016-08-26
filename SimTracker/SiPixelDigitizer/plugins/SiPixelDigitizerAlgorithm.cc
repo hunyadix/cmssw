@@ -39,9 +39,6 @@
 // November, 2010: Bug fix in removing TBMB/A half-modules (V. Cuplov)
 // February, 2011: Time improvement in DriftDirection()  (J. Bashir Butt)
 // June, 2011: Bug Fix for pixels on ROC edges in module_killing_DB() (J. Bashir Butt)
-
-#define MODIFY_DIGITIZER_ALGORITHM_FOR_CLUSTER_MERGING
-
 #include <iostream>
 
 #include "SimGeneral/NoiseGenerators/interface/GaussianTailNoiseGenerator.h"
