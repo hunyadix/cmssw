@@ -106,8 +106,13 @@ SiPixelDigitizer::SiPixelDigitizer(const edm::ParameterSet& iConfig, edm::stream
 
   const std::string alias("simSiPixelDigis");
 
-  mixMod.produces<edm::DetSetVector<PixelDigi> >().setBranchAlias(alias);
+  mixMod.produces<edm::DetSetVector<PixelDigi>>().setBranchAlias(alias);
   mixMod.produces<edm::DetSetVector<PixelDigiSimLink> >().setBranchAlias(alias + "siPixelDigiSimLink");
+#ifdef MODIFY_DIGITIZER_ALGORITHM_FOR_CLUSTER_MERGING
+  mixMod.produces<edm::DetSetVector<PixelDigi>>("dcolLostNeighbourDigiFlags").setBranchAlias(alias);
+#pragma message("\"Modification for cluster merging\" compiler directive is set...")
+
+#endif
   for(auto const& trackerContainer : trackerContainers)
   {
     edm::InputTag tag(hitsProducer, trackerContainer);
@@ -274,8 +279,12 @@ SiPixelDigitizer::finalizeEvent(edm::Event& iEvent, const edm::EventSetup& iSetu
   iSetup.get<TrackerTopologyRcd>().get(tTopoHand);
   const TrackerTopology *tTopo=tTopoHand.product();
 
-  std::vector<edm::DetSet<PixelDigi> > theDigiVector;
-  std::vector<edm::DetSet<PixelDigiSimLink> > theDigiLinkVector;
+  std::vector<edm::DetSet<PixelDigi>> theDigiVector;
+  std::vector<edm::DetSet<PixelDigiSimLink>> theDigiLinkVector;
+#ifdef MODIFY_DIGITIZER_ALGORITHM_FOR_CLUSTER_MERGING
+  std::vector<edm::DetSet<PixelDigi>> theDcolLostNeighbourPixelFlagVector;
+#endif
+
 
   PileupInfo_ = getEventPileupInfo();
   if(firstFinalizeEvent_)
@@ -296,7 +305,9 @@ SiPixelDigitizer::finalizeEvent(edm::Event& iEvent, const edm::EventSetup& iSetu
 
       edm::DetSet<PixelDigi> collector((*iu)->geographicalId().rawId());
       edm::DetSet<PixelDigiSimLink> linkcollector((*iu)->geographicalId().rawId());
-
+// #ifdef MODIFY_DIGITIZER_ALGORITHM_FOR_CLUSTER_MERGING
+      // edm::DetSet<PixelDigi> dcolLostNeighbourDigiFlagsCollector((*iu)->geographicalId().rawId());
+// #endif
 
       _pixeldigialgo->digitize(dynamic_cast<const PixelGeomDetUnit*>((*iu)),
                                collector.data,
@@ -305,6 +316,9 @@ SiPixelDigitizer::finalizeEvent(edm::Event& iEvent, const edm::EventSetup& iSetu
                                engine);
       if(collector.data.size() > 0)
       {
+#ifdef MODIFY_DIGITIZER_ALGORITHM_FOR_CLUSTER_MERGING
+        theDcolLostNeighbourPixelFlagVector.push_back(collector);
+#endif
         theDigiVector.push_back(std::move(collector));
       }
       if(linkcollector.data.size() > 0)
@@ -315,14 +329,21 @@ SiPixelDigitizer::finalizeEvent(edm::Event& iEvent, const edm::EventSetup& iSetu
   }
 
   // Step C: create collection with the cache vector of DetSet
-  std::auto_ptr<edm::DetSetVector<PixelDigi> >
+  std::auto_ptr<edm::DetSetVector<PixelDigi>>
   output(new edm::DetSetVector<PixelDigi>(theDigiVector));
-  std::auto_ptr<edm::DetSetVector<PixelDigiSimLink> >
+  std::auto_ptr<edm::DetSetVector<PixelDigiSimLink>>
   outputlink(new edm::DetSetVector<PixelDigiSimLink>(theDigiLinkVector));
+#ifdef MODIFY_DIGITIZER_ALGORITHM_FOR_CLUSTER_MERGING
+  std::auto_ptr<edm::DetSetVector<PixelDigi>>
+  flagsOutput(new edm::DetSetVector<PixelDigi>(theDcolLostNeighbourPixelFlagVector));
+#endif
 
   // Step D: write output to file
   iEvent.put(output);
   iEvent.put(outputlink);
+#ifdef MODIFY_DIGITIZER_ALGORITHM_FOR_CLUSTER_MERGING
+  iEvent.put(flagsOutput, "dcolLostNeighbourDigiFlags");
+#endif
 }
 
 CLHEP::HepRandomEngine* SiPixelDigitizer::randomEngine(edm::StreamID const& streamID)
