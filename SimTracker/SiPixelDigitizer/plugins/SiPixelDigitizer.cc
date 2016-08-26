@@ -110,9 +110,6 @@ SiPixelDigitizer::SiPixelDigitizer(const edm::ParameterSet& iConfig, edm::stream
   mixMod.produces<edm::DetSetVector<PixelDigiSimLink> >().setBranchAlias(alias + "siPixelDigiSimLink");
 #ifdef MODIFY_DIGITIZER_ALGORITHM_FOR_CLUSTER_MERGING
   mixMod.produces<edm::DetSetVector<PixelDigi>>("dcolLostNeighbourDigiFlags").setBranchAlias(alias);
-#pragma message("\"Modification for cluster merging\" compiler directive is set...")
-#else
-#pragma message("\"Modification for cluster merging\" compiler directive is NOT set...")
 #endif
   for(auto const& trackerContainer : trackerContainers)
   {

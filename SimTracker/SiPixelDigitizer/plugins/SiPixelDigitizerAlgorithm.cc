@@ -1739,14 +1739,54 @@ void SiPixelDigitizerAlgorithm::pixel_inefficiency(const PixelEfficiencies& eff,
 
     //float rand  = RandFlat::shoot();
     float rand  = CLHEP::RandFlat::shoot(engine);
-    if(chips[chipIndex]==0 || columns[dColInDet]==0
-        || rand>pixelEfficiency)
+
+#ifdef MODIFY_DIGITIZER_ALGORITHM_FOR_CLUSTER_MERGING
+    if(chips[chipIndex]==0 || rand>pixelEfficiency)
+    {
+      i -> second.set(0.); // reset amplitude,
+    } // end chip inefficiency or pixel inefficiency if
+    else if(columns[dColInDet] == 0) // For dcol marking
+    {
+      // Get all the possible neighbours
+      std::vector<std::pair<int, int>> neighbour_index_collection;
+      auto check_insert_index_pair = [&neighbour_index_collection] (int row, int col)
+      {
+        // This is unsafe for checking chip boundaries: only checks for checking overflows! 
+        if (row < 0 || row > PixelChannelIdentifier::thePacking.max_row || col < 0 || col > PixelChannelIdentifier::thePacking.max_column)
+        {
+          return;
+        }
+        neighbour_index_collection.emplace_back(row, col);
+      };
+      check_insert_index_pair(row - 1, col - 1);
+      check_insert_index_pair(row - 1, col    );
+      check_insert_index_pair(row - 1, col + 1);
+      check_insert_index_pair(row,     col - 1);
+      check_insert_index_pair(row,     col + 1);
+      check_insert_index_pair(row + 1, col - 1);
+      check_insert_index_pair(row + 1, col    );
+      check_insert_index_pair(row + 1, col + 1);
+      // Set markers for the possible neighbours to 1; 
+      for(const auto& index_pair: neighbour_index_collection)
+      {
+        PixelDigi::ChannelType channel = PixelDigi::pixelToChannel(index_pair.first, index_pair.second);
+        channelsWithDcolLostNeighbours.push_back(channel);
+      }
+      i -> second.set(0.); // reset amplitude,
+    } // end dcol loss if
+#else
+    if(chips[chipIndex]==0 || columns[dColInDet]==0 || rand>pixelEfficiency)
     {
       // make pixel amplitude =0, pixel will be lost at clusterization
       i->second.set(0.); // reset amplitude,
     } // end if
-
+#endif
   } // end pixel loop
+#ifdef MODIFY_DIGITIZER_ALGORITHM_FOR_CLUSTER_MERGING
+  // Making sure that each channel is only stored once by filtering non-unique elements
+  std::sort(channelsWithDcolLostNeighbours.begin(), channelsWithDcolLostNeighbours.end());
+  channelsWithDcolLostNeighbours.erase(std::unique(channelsWithDcolLostNeighbours.begin(), channelsWithDcolLostNeighbours.end()), channelsWithDcolLostNeighbours.end());
+#endif
 } // end pixel_indefficiency
 
 //***************************************************************************************
