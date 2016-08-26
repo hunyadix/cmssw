@@ -11,44 +11,49 @@
  * Persistent digi for the Pixels.
  */
 
-class PixelDigi {
+class PixelDigi
+{
 public:
 
   typedef unsigned int PackedDigiType;
   typedef unsigned int ChannelType;
 
-  PixelDigi( int packed_value) : theData(packed_value) {}
+  PixelDigi(int packed_value) : theData(packed_value) {}
 
-  PixelDigi( int row, int col, int adc) {
-    init( row, col, adc);
+  PixelDigi(int row, int col, int adc)
+  {
+    init(row, col, adc);
   }
 
-  PixelDigi( int chan, int adc) {
+  PixelDigi(int chan, int adc)
+  {
     std::pair<int,int> rc = channelToPixel(chan);
-    init( rc.first, rc.second, adc);
+    init(rc.first, rc.second, adc);
   }
 
   PixelDigi() : theData(0)  {}
 
-  void init( int row, int col, int adc) {
-#ifdef FIXME_DEBUG 
+  void init(int row, int col, int adc)
+  {
+#ifdef FIXME_DEBUG
     // This check is for the maximal row or col number that can be packed
     // in a PixelDigi. The actual number of rows or columns in a detector
     // may be smaller!
     // it is done much better in Raw2Digi...
-    if ( row < 0 || row > PixelChannelIdentifier::thePacking.max_row ||
-         col < 0 || col > PixelChannelIdentifier::thePacking.max_column) {
+    if(row < 0 || row > PixelChannelIdentifier::thePacking.max_row ||
+        col < 0 || col > PixelChannelIdentifier::thePacking.max_column)
+    {
       std::cout << "PixelDigi constructor: row or column out packing range "
-               << row << ' ' << col << std::endl;
+                << row << ' ' << col << std::endl;
     }
 #endif
 
-  // Set adc to max_adc in case of overflow
-  adc = (adc > PixelChannelIdentifier::thePacking.max_adc) ? PixelChannelIdentifier::thePacking.max_adc : std::max(adc,0);
+    // Set adc to max_adc in case of overflow
+    adc = (adc > PixelChannelIdentifier::thePacking.max_adc) ? PixelChannelIdentifier::thePacking.max_adc : std::max(adc,0);
 
-  theData = (row << PixelChannelIdentifier::thePacking.row_shift) |
-    (col << PixelChannelIdentifier::thePacking.column_shift) |
-    (adc << PixelChannelIdentifier::thePacking.adc_shift);
+    theData = (row << PixelChannelIdentifier::thePacking.row_shift) |
+              (col << PixelChannelIdentifier::thePacking.column_shift) |
+              (adc << PixelChannelIdentifier::thePacking.adc_shift);
 
   }
 
@@ -59,21 +64,23 @@ public:
   unsigned short adc() const  {return (theData >> PixelChannelIdentifier::thePacking.adc_shift) & PixelChannelIdentifier::thePacking.adc_mask;}
   PackedDigiType packedData() const {return theData;}
 
-  static std::pair<int,int> channelToPixel( int ch) {
-    int row = ( ch >> PixelChannelIdentifier::thePacking.column_width) & PixelChannelIdentifier::thePacking.row_mask;
+  static std::pair<int,int> channelToPixel(int ch)
+  {
+    int row = (ch >> PixelChannelIdentifier::thePacking.column_width) & PixelChannelIdentifier::thePacking.row_mask;
     int col = ch & PixelChannelIdentifier::thePacking.column_mask;
     return std::pair<int,int>(row,col);
   }
 
-  static int pixelToChannel( int row, int col) {
+  static int pixelToChannel(int row, int col)
+  {
     return (row << PixelChannelIdentifier::thePacking.column_width) | col;
   }
 
-  int channel() const {return PixelChannelIdentifier::pixelToChannel( row(), column());}
+  int channel() const {return PixelChannelIdentifier::pixelToChannel(row(), column());}
 
- private:
+private:
   PackedDigiType theData;
-};  
+};
 
 // Comparison operators
 
@@ -81,14 +88,16 @@ public:
 //  return one.channel() < other.channel();
 //}
 
-inline bool operator<( const PixelDigi& one, const PixelDigi& other) {
+inline bool operator<(const PixelDigi& one, const PixelDigi& other)
+{
   return (one.packedData()&PixelChannelIdentifier::thePacking.rowcol_mask) < (other.packedData()&PixelChannelIdentifier::thePacking.rowcol_mask);
 }
 
 #include<iostream>
-inline std::ostream & operator<<(std::ostream & o, const PixelDigi& digi) {
+inline std::ostream & operator<<(std::ostream & o, const PixelDigi& digi)
+{
   return o << " " << digi.channel()
-	   << " " << digi.adc();
+         << " " << digi.adc();
 }
 
 #endif
