@@ -327,7 +327,7 @@ private:
   // Contains the accumulated hit info.
   signalMaps _signal;
 #ifdef MODIFY_DIGITIZER_ALGORITHM_FOR_CLUSTER_MERGING
-  std::set<int> channelsWithDcolLostNeighbours;
+  std::set<int> dcolDisabledChannels;
 #endif
 
   const bool makeDigiSimLinks_;

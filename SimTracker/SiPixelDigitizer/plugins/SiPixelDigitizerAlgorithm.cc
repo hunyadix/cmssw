@@ -826,15 +826,39 @@ void SiPixelDigitizerAlgorithm::digitize(const PixelGeomDetUnit* pixdet,
     std::vector<PixelDigi> digiDcolLostFlags_temp;
     for(const auto& digi: digis)
     {
-      int channel = digi.channel();
-      if(channelsWithDcolLostNeighbours.count(channel) == 0) // has no dcol lost neighbour
+      int row     = digi.row();
+      int col     = digi.column();
+      int modifiedAdcValue = 0;      
+      // Get all the possible neighbours
+      std::vector<std::pair<int, int>> neighbour_index_collection;
+      auto check_insert_index_pair = [&neighbour_index_collection] (int row, int col)
       {
-        digiDcolLostFlags.emplace_back(channel, 0);
-      }
-      else                                                   // has at least one dcol lost neighbour
+        // This is unsafe for checking chip boundaries: only checks for checking overflows! 
+        if (row < 0 || row > PixelChannelIdentifier::thePacking.max_row || col < 0 || col > PixelChannelIdentifier::thePacking.max_column)
+        {
+          return;
+        }
+        neighbour_index_collection.emplace_back(row, col);
+      };
+      check_insert_index_pair(row - 1, col - 1);
+      check_insert_index_pair(row - 1, col    );
+      check_insert_index_pair(row - 1, col + 1);
+      check_insert_index_pair(row,     col - 1);
+      check_insert_index_pair(row,     col + 1);
+      check_insert_index_pair(row + 1, col - 1);
+      check_insert_index_pair(row + 1, col    );
+      check_insert_index_pair(row + 1, col + 1);
+      for(unsigned int neighbour_array_index = 0; neighbour_array_index < neighbour_index_collection.size(); ++neighbour_array_index)
       {
-        digiDcolLostFlags.emplace_back(channel, 1);
+        int neighbour_row = neighbour_index_collection[neighbour_array_index].first;
+        int neighbour_col = neighbour_index_collection[neighbour_array_index].second;
+        int neighbour_channel = PixelDigi::pixelToChannel(neighbour_row, neighbour_col);
+        if(dcolDisabledChannels.count(neighbour_channel))
+        modifiedAdcValue |= 1 << neighbour_array_index;
+        // PixelDigi::ChannelType channel = PixelDigi::pixelToChannel(index_pair.first, index_pair.second);
       }
+      digiDcolLostFlags.emplace_back(row, col, modifiedAdcValue);
+      digiDcolLostFlags.emplace_back(row, col, modifiedAdcValue);
     }
     std::swap(digiDcolLostFlags_temp, digiDcolLostFlags);
 #endif
@@ -1767,31 +1791,7 @@ void SiPixelDigitizerAlgorithm::pixel_inefficiency(const PixelEfficiencies& eff,
     } // end chip inefficiency or pixel inefficiency if
     else if(columns[dColInDet] == 0) // For dcol marking
     {
-      // Get all the possible neighbours
-      std::vector<std::pair<int, int>> neighbour_index_collection;
-      auto check_insert_index_pair = [&neighbour_index_collection] (int row, int col)
-      {
-        // This is unsafe for checking chip boundaries: only checks for checking overflows! 
-        if (row < 0 || row > PixelChannelIdentifier::thePacking.max_row || col < 0 || col > PixelChannelIdentifier::thePacking.max_column)
-        {
-          return;
-        }
-        neighbour_index_collection.emplace_back(row, col);
-      };
-      check_insert_index_pair(row - 1, col - 1);
-      check_insert_index_pair(row - 1, col    );
-      check_insert_index_pair(row - 1, col + 1);
-      check_insert_index_pair(row,     col - 1);
-      check_insert_index_pair(row,     col + 1);
-      check_insert_index_pair(row + 1, col - 1);
-      check_insert_index_pair(row + 1, col    );
-      check_insert_index_pair(row + 1, col + 1);
-      // Set markers for the possible neighbours to 1; 
-      for(const auto& index_pair: neighbour_index_collection)
-      {
-        PixelDigi::ChannelType channel = PixelDigi::pixelToChannel(index_pair.first, index_pair.second);
-        channelsWithDcolLostNeighbours.insert(channel);
-      }
+      dcolDisabledChannels.insert(PixelDigi::pixelToChannel(row, col));
       i -> second.set(0.); // reset amplitude,
     } // end dcol loss if
 #else

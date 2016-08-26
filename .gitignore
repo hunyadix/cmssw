@@ -5,4 +5,5 @@ __init__.py
 #*#
 *~
 DPGAnalysis/PixelTimingStudy/*
+TestSplitClusterMerger/*
 Data_for_testing/*
