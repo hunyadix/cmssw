@@ -93,15 +93,3 @@ eras.phase1Pixel.toModify( SiPixelSimBlock, func=_modifyPixelDigitizerForPhase1P
 # Threshold in electrons are the Official CRAFT09 numbers:
 # FPix(smearing)/BPix(smearing) = 2480(160)/2730(200)
 
-#DEAD MODULES LIST: NEW LIST AFTER 2009 PIXEL REPAIRS
-# https://twiki.cern.ch/twiki/bin/view/CMS/SiPixelQualityHistory
-######Barrel
-#Bad Module: 302055940 errorType 2 BadRocs=ff00
-#Bad Module: 302059800 errorType 0 BadRocs=ffff
-#BmI_SEC3_LYR2_LDR5F_MOD3 -- 302121992, "TBM-A"
-#####Forward
-#Bad Module: 352453892 errorType 0 BadRocs=ffff
-#BmO_DISK1_BLD9_PNL2 -- 344014340, 344014344, 344014348
-#Barrel 
-#302187268, "none" (ROC 6) 
-
