@@ -81,7 +81,7 @@ def _modifyPixelDigitizerForPhase1Pixel( digitizer ) :
     digitizer.thePixelChipEfficiency_FPix2 = cms.double(0.999)
     digitizer.thePixelChipEfficiency_FPix3 = cms.double(0.999)
     # something broken in the configs above - turn off for now
-    digitizer.AddPixelInefficiency = cms.bool(False)
+    digitizer.AddPixelInefficiency = cms.bool(True)
 
 def _modifyPixelDigitizerForPhase1PixelWithPileup( processObject ) :
     """
@@ -92,18 +92,6 @@ def _modifyPixelDigitizerForPhase1PixelWithPileup( processObject ) :
     with a <era>.makeProcessModifier() command, since it can only be applied
     at the end because the number of pileup interactions is not known yet.
     """
-    if hasattr(processObject,'mix'): 
-        n=0
-        if hasattr(processObject.mix,'input'):
-            n=processObject.mix.input.nbPileupEvents.averageNumber.value()
-        if n>0:
-            processObject.mix.digitizers.pixel.thePixelColEfficiency_BPix1 = cms.double(1.0-(0.0238*n/50.0))
-            processObject.mix.digitizers.pixel.thePixelColEfficiency_BPix2 = cms.double(1.0-(0.0046*n/50.0))
-            processObject.mix.digitizers.pixel.thePixelColEfficiency_BPix3 = cms.double(1.0-(0.0018*n/50.0))
-            processObject.mix.digitizers.pixel.thePixelColEfficiency_BPix4 = cms.double(1.0-(0.0008*n/50.0))
-            processObject.mix.digitizers.pixel.thePixelColEfficiency_FPix1 = cms.double(1.0-(0.0018*n/50.0))
-            processObject.mix.digitizers.pixel.thePixelColEfficiency_FPix2 = cms.double(1.0-(0.0018*n/50.0))
-            processObject.mix.digitizers.pixel.thePixelColEfficiency_FPix3 = cms.double(1.0-(0.0018*n/50.0))
 
 
 SiPixelSimBlock = cms.PSet(
