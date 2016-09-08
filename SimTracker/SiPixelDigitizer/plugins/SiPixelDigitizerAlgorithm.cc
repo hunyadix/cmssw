@@ -857,8 +857,7 @@ void SiPixelDigitizerAlgorithm::digitize(const PixelGeomDetUnit* pixdet,
         modifiedAdcValue |= 1 << neighbour_array_index;
         // PixelDigi::ChannelType channel = PixelDigi::pixelToChannel(index_pair.first, index_pair.second);
       }
-      digiDcolLostFlags.emplace_back(row, col, modifiedAdcValue);
-      digiDcolLostFlags.emplace_back(row, col, modifiedAdcValue);
+      digiDcolLostFlags_temp.emplace_back(row, col, modifiedAdcValue);
     }
     std::swap(digiDcolLostFlags_temp, digiDcolLostFlags);
 #endif
