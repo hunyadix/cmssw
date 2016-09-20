@@ -853,7 +853,7 @@ void SiPixelDigitizerAlgorithm::digitize(const PixelGeomDetUnit* pixdet,
       {
         int neighbour_col = neighbour_index_collection[neighbour_array_index].first;
         int neighbour_row = neighbour_index_collection[neighbour_array_index].second;
-        if(neighbour_row == -1 && neighbour_col = -1) continue;
+        if(neighbour_row == -1 && neighbour_col == -1) continue;
         int neighbour_channel = PixelDigi::pixelToChannel(neighbour_row, neighbour_col);
         if(dcolDisabledChannels.count(neighbour_channel))
         {
@@ -1794,7 +1794,7 @@ void SiPixelDigitizerAlgorithm::pixel_inefficiency(const PixelEfficiencies& eff,
     } // end chip inefficiency or pixel inefficiency if
     else if(columns[dColInDet] == 0) // For dcol marking
     {
-      dcolDisabledChannels.insert(PixelDigi::pixelToChannel(row, col));
+      dcolDisabledChannels.insert(i -> first);
       i -> second.set(0.); // reset amplitude,
     } // end dcol loss if
 #else
