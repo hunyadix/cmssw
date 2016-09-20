@@ -826,36 +826,40 @@ void SiPixelDigitizerAlgorithm::digitize(const PixelGeomDetUnit* pixdet,
     std::vector<PixelDigi> digiDcolLostFlags_temp;
     for(const auto& digi: digis)
     {
-      int row     = digi.row();
       int col     = digi.column();
+      int row     = digi.row();
       int modifiedAdcValue = 0;      
       // Get all the possible neighbours
       std::vector<std::pair<int, int>> neighbour_index_collection;
-      auto check_insert_index_pair = [&neighbour_index_collection] (int row, int col)
+      auto check_insert_index_pair = [&neighbour_index_collection] (int col, int row)
       {
         // This is unsafe for checking chip boundaries: only checks for checking overflows! 
         if (row < 0 || row > PixelChannelIdentifier::thePacking.max_row || col < 0 || col > PixelChannelIdentifier::thePacking.max_column)
         {
+          neighbour_index_collection.emplace_back(-1, -1);
           return;
         }
-        neighbour_index_collection.emplace_back(row, col);
+        neighbour_index_collection.emplace_back(col, row);
       };
-      check_insert_index_pair(row - 1, col - 1);
-      check_insert_index_pair(row - 1, col    );
-      check_insert_index_pair(row - 1, col + 1);
-      check_insert_index_pair(row,     col - 1);
-      check_insert_index_pair(row,     col + 1);
-      check_insert_index_pair(row + 1, col - 1);
-      check_insert_index_pair(row + 1, col    );
-      check_insert_index_pair(row + 1, col + 1);
+      check_insert_index_pair(col - 1, row - 1);
+      check_insert_index_pair(col - 1, row    );
+      check_insert_index_pair(col - 1, row + 1);
+      check_insert_index_pair(col,     row - 1);
+      check_insert_index_pair(col,     row + 1);
+      check_insert_index_pair(col + 1, row - 1);
+      check_insert_index_pair(col + 1, row    );
+      check_insert_index_pair(col + 1, row + 1);
       for(unsigned int neighbour_array_index = 0; neighbour_array_index < neighbour_index_collection.size(); ++neighbour_array_index)
       {
-        int neighbour_row = neighbour_index_collection[neighbour_array_index].first;
-        int neighbour_col = neighbour_index_collection[neighbour_array_index].second;
+        int neighbour_col = neighbour_index_collection[neighbour_array_index].first;
+        int neighbour_row = neighbour_index_collection[neighbour_array_index].second;
+        if(neighbour_row == -1 && neighbour_col = -1) continue;
         int neighbour_channel = PixelDigi::pixelToChannel(neighbour_row, neighbour_col);
         if(dcolDisabledChannels.count(neighbour_channel))
-        modifiedAdcValue |= 1 << neighbour_array_index;
-        // PixelDigi::ChannelType channel = PixelDigi::pixelToChannel(index_pair.first, index_pair.second);
+        {
+          modifiedAdcValue |= (1 << neighbour_array_index);
+        }
+        // channel = PixelDigi::pixelToChannel(index_pair.first, index_pair.second);
       }
       digiDcolLostFlags_temp.emplace_back(row, col, modifiedAdcValue);
     }
