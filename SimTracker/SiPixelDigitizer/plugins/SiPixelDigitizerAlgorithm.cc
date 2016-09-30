@@ -849,6 +849,7 @@ void SiPixelDigitizerAlgorithm::digitize(const PixelGeomDetUnit* pixdet,
       check_insert_index_pair(col + 1, row - 1);
       check_insert_index_pair(col + 1, row    );
       check_insert_index_pair(col + 1, row + 1);
+      // int debugNeighbourCounter = 0;
       for(unsigned int neighbour_array_index = 0; neighbour_array_index < neighbour_index_collection.size(); ++neighbour_array_index)
       {
         int neighbour_col = neighbour_index_collection[neighbour_array_index].first;
@@ -859,11 +860,16 @@ void SiPixelDigitizerAlgorithm::digitize(const PixelGeomDetUnit* pixdet,
         {
           modifiedAdcValue |= (1 << neighbour_array_index);
         }
+        // ++debugNeighbourCounter;
         // channel = PixelDigi::pixelToChannel(index_pair.first, index_pair.second);
       }
+      // std::cout << "Number of neighbours: " << debugNeighbourCounter             << std::endl;
+      // std::cout << "Bitmask value: "        << modifiedAdcValue                  << std::endl;
+      // std::cout << "Bitmask in binary: "    << std::bitset<8>(modifiedAdcValue) << std::endl;
+      // std::cin.get(); 
       digiDcolLostFlags_temp.emplace_back(row, col, modifiedAdcValue);
     }
-    std::swap(digiDcolLostFlags_temp, digiDcolLostFlags);
+    digiDcolLostFlags.swap(digiDcolLostFlags_temp);
 #endif
 
 #ifdef TP_DEBUG
@@ -1787,23 +1793,14 @@ void SiPixelDigitizerAlgorithm::pixel_inefficiency(const PixelEfficiencies& eff,
     //float rand  = RandFlat::shoot();
     float rand  = CLHEP::RandFlat::shoot(engine);
 
-#ifdef MODIFY_DIGITIZER_ALGORITHM_FOR_CLUSTER_MERGING
-    if(chips[chipIndex]==0 || rand>pixelEfficiency)
-    {
-      i -> second.set(0.); // reset amplitude,
-    } // end chip inefficiency or pixel inefficiency if
-    else if(columns[dColInDet] == 0) // For dcol marking
-    {
-      dcolDisabledChannels.insert(i -> first);
-      i -> second.set(0.); // reset amplitude,
-    } // end dcol loss if
-#else
     if(chips[chipIndex]==0 || columns[dColInDet]==0 || rand>pixelEfficiency)
     {
+#ifdef MODIFY_DIGITIZER_ALGORITHM_FOR_CLUSTER_MERGING
+      dcolDisabledChannels.insert(i -> first);
+#endif
       // make pixel amplitude = 0, pixel will be lost at clusterization
       i->second.set(0.); // reset amplitude,
     } // end if
-#endif
   } // end pixel loop
 } // end pixel_indefficiency
 
