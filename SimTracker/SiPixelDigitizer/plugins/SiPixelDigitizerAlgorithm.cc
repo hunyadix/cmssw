@@ -823,7 +823,7 @@ void SiPixelDigitizerAlgorithm::digitize(const PixelGeomDetUnit* pixdet,
   make_digis(thePixelThresholdInE, detID, pixdet, digis, simlinks, tTopo);
 
 #ifdef MODIFY_DIGITIZER_ALGORITHM_FOR_CLUSTER_MERGING
-    std::vector<PixelDigi> digiDcolLostFlags_temp;
+    digiDcolLostFlags.clear();
     for(const auto& digi: digis)
     {
       int col     = digi.column();
@@ -867,9 +867,8 @@ void SiPixelDigitizerAlgorithm::digitize(const PixelGeomDetUnit* pixdet,
       // std::cout << "Bitmask value: "        << modifiedAdcValue                  << std::endl;
       // std::cout << "Bitmask in binary: "    << std::bitset<8>(modifiedAdcValue) << std::endl;
       // std::cin.get(); 
-      digiDcolLostFlags_temp.emplace_back(row, col, modifiedAdcValue);
+      digiDcolLostFlags.emplace_back(row, col, modifiedAdcValue);
     }
-    digiDcolLostFlags.swap(digiDcolLostFlags_temp);
 #endif
 
 #ifdef TP_DEBUG

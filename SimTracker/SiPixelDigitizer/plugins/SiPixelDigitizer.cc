@@ -318,10 +318,10 @@ SiPixelDigitizer::finalizeEvent(edm::Event& iEvent, const edm::EventSetup& iSetu
       if(collector.data.size() > 0)
       {
 #ifdef MODIFY_DIGITIZER_ALGORITHM_FOR_CLUSTER_MERGING
-        if(0 < dcolLostNeighbourDigiFlagsCollector.size())
-        {
-          std::cout << "Adding " << dcolLostNeighbourDigiFlagsCollector.size() << " elements to the dcol lost neightbour digi collection." << std::endl;
-        }
+        // if(0 < dcolLostNeighbourDigiFlagsCollector.size())
+        // {
+        //   std::cout << "Adding " << dcolLostNeighbourDigiFlagsCollector.size() << " elements to the dcol lost neightbour digi collection." << std::endl;
+        // }
         theDcolLostNeighbourPixelFlagVector.push_back(std::move(dcolLostNeighbourDigiFlagsCollector));
 #endif
         theDigiVector.push_back(std::move(collector));
@@ -339,12 +339,12 @@ SiPixelDigitizer::finalizeEvent(edm::Event& iEvent, const edm::EventSetup& iSetu
   std::auto_ptr<edm::DetSetVector<PixelDigiSimLink>>
   outputlink(new edm::DetSetVector<PixelDigiSimLink>(theDigiLinkVector));
 #ifdef MODIFY_DIGITIZER_ALGORITHM_FOR_CLUSTER_MERGING
-  int markerCounter = 0;
-  for(const auto& markersOnModule: theDcolLostNeighbourPixelFlagVector)
-  {
-    markerCounter += markersOnModule.size();
-  }
-  std::cout << "markerCounter: " << markerCounter << std::endl;
+  // int markerCounter = 0;
+  // for(const auto& markersOnModule: theDcolLostNeighbourPixelFlagVector)
+  // {
+  //   markerCounter += markersOnModule.size();
+  // }
+  // std::cout << "markerCounter: " << markerCounter << std::endl;
   std::auto_ptr<edm::DetSetVector<PixelDigi>>
   flagsOutput(new edm::DetSetVector<PixelDigi>(theDcolLostNeighbourPixelFlagVector));
 #endif
