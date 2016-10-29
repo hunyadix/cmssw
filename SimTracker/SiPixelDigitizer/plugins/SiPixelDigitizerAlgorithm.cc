@@ -828,45 +828,89 @@ void SiPixelDigitizerAlgorithm::digitize(const PixelGeomDetUnit* pixdet,
     {
       int col     = digi.column();
       int row     = digi.row();
-      int modifiedAdcValue = 0;      
       // Get all the possible neighbours
-      std::vector<std::pair<int, int>> neighbour_index_collection;
-      auto check_insert_index_pair = [&neighbour_index_collection] (int col, int row)
-      {
-        // This is unsafe for checking chip boundaries: only checks for checking overflows! 
-        if (row < 0 || row > PixelChannelIdentifier::thePacking.max_row || col < 0 || col > PixelChannelIdentifier::thePacking.max_column)
-        {
-          neighbour_index_collection.emplace_back(-1, -1);
-          return;
-        }
-        neighbour_index_collection.emplace_back(col, row);
-      };
-      check_insert_index_pair(col - 1, row - 1);
-      check_insert_index_pair(col - 1, row    );
-      check_insert_index_pair(col - 1, row + 1);
-      check_insert_index_pair(col,     row - 1);
-      check_insert_index_pair(col,     row + 1);
-      check_insert_index_pair(col + 1, row - 1);
-      check_insert_index_pair(col + 1, row    );
-      check_insert_index_pair(col + 1, row + 1);
+      // std::vector<std::pair<int, int>> neighbour_index_collection;
+      // for(int col_modifier = -1; col_modifier <= 1; ++col_modifier)
+      // {
+      //   for(int row_modifier = -1; row_modifier <= 1; ++row_modifier)
+      //   {
+      //     if(col_modifier == 0 && row_modifier == 0) continue;
+      //     // This is unsafe for checking chip boundaries: only checks for overflows! 
+      //     if(row_modifier < 0 || row_modifier > PixelChannelIdentifier::thePacking.max_row || col_modifier < 0 || col_modifier > PixelChannelIdentifier::thePacking.max_column)
+      //     {
+      //       neighbour_index_collection.emplace_back(-1, -1);
+      //       continue;
+      //     }
+      //     neighbour_index_collection.emplace_back(col + col_modifier, row + row_modifier);
+      //   }
+      // }
       // int debugNeighbourCounter = 0;
-      for(unsigned int neighbour_array_index = 0; neighbour_array_index < neighbour_index_collection.size(); ++neighbour_array_index)
+      // for(unsigned int neighbour_array_index = 0; neighbour_array_index < neighbour_index_collection.size(); ++neighbour_array_index)
+      // {
+      //   int neighbour_col = neighbour_index_collection[neighbour_array_index].first;
+      //   int neighbour_row = neighbour_index_collection[neighbour_array_index].second;
+      //   if(neighbour_row == -1 && neighbour_col == -1) continue;
+      //   int neighbour_channel = PixelDigi::pixelToChannel(neighbour_row, neighbour_col);
+      //   if(dcolDisabledChannels.count(neighbour_channel))
+      //   {
+      //     std::cout << "Before |: " << modifiedAdcValue << std::endl;
+      //     std::cout << "Adding: "   << (1 << neighbour_array_index) << std::endl;
+      //     modifiedAdcValue |= (1 << neighbour_array_index);
+      //     std::cout << "After |: " << modifiedAdcValue << std::endl;
+      //     std::cin.get();
+      //   }
+      // }
+      static const std::map<std::pair<int, int>, int> colRowDistanceToIndex =
       {
-        int neighbour_col = neighbour_index_collection[neighbour_array_index].first;
-        int neighbour_row = neighbour_index_collection[neighbour_array_index].second;
-        if(neighbour_row == -1 && neighbour_col == -1) continue;
-        int neighbour_channel = PixelDigi::pixelToChannel(neighbour_row, neighbour_col);
-        if(dcolDisabledChannels.count(neighbour_channel))
-        {
-          modifiedAdcValue |= (1 << neighbour_array_index);
-        }
-        // ++debugNeighbourCounter;
-        // channel = PixelDigi::pixelToChannel(index_pair.first, index_pair.second);
-      }
-      // std::cout << "Number of neighbours: " << debugNeighbourCounter             << std::endl;
-      // std::cout << "Bitmask value: "        << modifiedAdcValue                  << std::endl;
-      // std::cout << "Bitmask in binary: "    << std::bitset<8>(modifiedAdcValue) << std::endl;
-      // std::cin.get(); 
+        std::make_pair(std::make_pair(-1, -1), 0),
+        std::make_pair(std::make_pair(-1,  0), 1),
+        std::make_pair(std::make_pair(-1, +1), 2),
+        std::make_pair(std::make_pair( 0, -1), 3),
+        std::make_pair(std::make_pair( 0, +1), 4),
+        std::make_pair(std::make_pair(+1, -1), 5),
+        std::make_pair(std::make_pair(+1,  0), 6),
+        std::make_pair(std::make_pair(+1, +1), 7)
+      };
+
+      // std::cout << "Map at (-1, -1): " << colRowDistanceToIndex.at(std::make_pair(-1, -1)) << std::endl;
+      // std::cout << "Map at (-1,  0): " << colRowDistanceToIndex.at(std::make_pair(-1,  0)) << std::endl;
+      // std::cout << "Map at (-1, +1): " << colRowDistanceToIndex.at(std::make_pair(-1, +1)) << std::endl;
+      // std::cout << "Map at ( 0, -1): " << colRowDistanceToIndex.at(std::make_pair( 0, -1)) << std::endl;
+      // std::cout << "Map at ( 0, +1): " << colRowDistanceToIndex.at(std::make_pair( 0, +1)) << std::endl;
+      // std::cout << "Map at (+1, -1): " << colRowDistanceToIndex.at(std::make_pair(+1, -1)) << std::endl;
+      // std::cout << "Map at (+1,  0): " << colRowDistanceToIndex.at(std::make_pair(+1,  0)) << std::endl;
+      // std::cout << "Map at (+1, +1): " << colRowDistanceToIndex.at(std::make_pair(+1, +1)) << std::endl;
+
+      int modifiedAdcValue = 0;    
+      for(const std::pair<int, int>& disabledPosition: dcolDisabledPositions)
+      {
+          // Order: row, col
+          // const std::pair<int, int> rowColPairToCheck = PixelDigi::channelToPixel(disabledChannel);
+          // const int& rowToCheck                       = rowColPairToCheck.first;
+          // const int& colToCheck                       = rowColPairToCheck.second;
+          const int& rowToCheck                       = disabledPosition.first;
+          const int& colToCheck                       = disabledPosition.second;
+          const int rowDistance                       = rowToCheck - row;
+          const int colDistance                       = colToCheck - col;
+          const int absRowDistance                    = std::abs(rowDistance);
+          const int absColDistance                    = std::abs(colDistance);
+          // std::cout << "colDistance: " << colDistance << std::endl;
+          // std::cout << "rowDistance: " << rowDistance << std::endl;
+          // std::cout << "absColDistance: " << absColDistance << std::endl;
+          // std::cout << "absRowDistance: " << absRowDistance << std::endl;
+          if((absRowDistance == 1 && absColDistance == 0) || (absRowDistance == 0 && absColDistance == 1))
+          {
+            std::cout << "colDistance: " << colDistance << std::endl;
+            std::cout << "rowDistance: " << rowDistance << std::endl;
+            int neighbourIndex = colRowDistanceToIndex.at(std::make_pair(colDistance, rowDistance));
+            std::cout << "Before |: " << modifiedAdcValue << std::endl;
+            std::cout << "Adding: "   << (1 << neighbourIndex) << std::endl;
+            modifiedAdcValue |= (1 << neighbourIndex);
+            std::cout << "After |: " << modifiedAdcValue << std::endl;
+            std::cin.get();
+          }
+      }      
+      // PixelDigi constructor: PixelDigi(int row, int col, int adc)
       digiDcolLostFlags.emplace_back(row, col, modifiedAdcValue);
     }
 #endif
@@ -1776,6 +1820,9 @@ void SiPixelDigitizerAlgorithm::pixel_inefficiency(const PixelEfficiencies& eff,
 
   // Now loop again over pixels to kill some of them.
   // Loop over hit pixels, amplitude in electrons, channel = coded row,col
+  #ifdef MODIFY_DIGITIZER_ALGORITHM_FOR_CLUSTER_MERGING
+        dcolDisabledPositions.clear();
+  #endif
   for(signal_map_iterator i = theSignal.begin(); i != theSignal.end(); ++i)
   {
 
@@ -1795,7 +1842,8 @@ void SiPixelDigitizerAlgorithm::pixel_inefficiency(const PixelEfficiencies& eff,
     if(chips[chipIndex]==0 || columns[dColInDet]==0 || rand>pixelEfficiency)
     {
 #ifdef MODIFY_DIGITIZER_ALGORITHM_FOR_CLUSTER_MERGING
-      dcolDisabledChannels.insert(i -> first);
+      // dcolDisabledChannels.insert(i -> first);
+      dcolDisabledPositions.insert(std::make_pair(row, col));
 #endif
       // make pixel amplitude = 0, pixel will be lost at clusterization
       i->second.set(0.); // reset amplitude,
