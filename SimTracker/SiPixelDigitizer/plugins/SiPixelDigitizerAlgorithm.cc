@@ -900,14 +900,14 @@ void SiPixelDigitizerAlgorithm::digitize(const PixelGeomDetUnit* pixdet,
           // std::cout << "absRowDistance: " << absRowDistance << std::endl;
           if((absRowDistance == 1 && absColDistance == 0) || (absRowDistance == 0 && absColDistance == 1))
           {
-            std::cout << "colDistance: " << colDistance << std::endl;
-            std::cout << "rowDistance: " << rowDistance << std::endl;
+            // std::cout << "colDistance: " << colDistance << std::endl;
+            // std::cout << "rowDistance: " << rowDistance << std::endl;
             int neighbourIndex = colRowDistanceToIndex.at(std::make_pair(colDistance, rowDistance));
-            std::cout << "Before |: " << modifiedAdcValue << std::endl;
-            std::cout << "Adding: "   << (1 << neighbourIndex) << std::endl;
+            // std::cout << "Before |: " << modifiedAdcValue << std::endl;
+            // std::cout << "Adding: "   << (1 << neighbourIndex) << std::endl;
             modifiedAdcValue |= (1 << neighbourIndex);
-            std::cout << "After |: " << modifiedAdcValue << std::endl;
-            std::cin.get();
+            // std::cout << "After |: " << modifiedAdcValue << std::endl;
+            // std::cin.get();
           }
       }      
       // PixelDigi constructor: PixelDigi(int row, int col, int adc)
