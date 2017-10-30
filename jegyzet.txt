@@ -1,0 +1,40 @@
+///////////////////
+// Modifications //
+///////////////////
+
+Merging tesztelése:
+ - Kikeresem az klaszter-kollekciókat trackekkel párosító szkriptet
+ - A track builderben generálok egy klaszter-párokat tartalmazó kollekciót
+ - Módosítom a track generáló szkriptet, úgy, hogy felírja az összes olyan tracket, amelyik
+   egy klaszter-pár egyikét rendeli hozzá egy trackhez
+ - Megkeresem azokat a track-párokat, amelyekhez egy klaszterpár két eleme tartozik és kiveszem
+   ezeket a trackeket a listából
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                                                                                //
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/////////
+// Fun //
+/////////
+
+template <Scenario... listOfScenarios>
+void selectRuntimeScenario(Scenario t_templateFromSpecification)
+{
+	using expander = int[];
+	static_cast<void>(expander
+	{
+		([&] (auto optionOnList) 
+        {
+            (optionOnList == t_templateFromSpecification) ? performOperation<optionOnList>() : void();
+		} (Option<listOfScenarios>{}), 0)...
+	});
+}
+
+2017Oct25
+2017Oct25
+
+Lebó Kata
+Fél 11 péntek
+
+

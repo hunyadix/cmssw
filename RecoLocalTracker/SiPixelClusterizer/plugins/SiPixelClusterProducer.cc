@@ -109,6 +109,10 @@
 
     // Step B: create the final output collection
     auto output = std::make_unique< SiPixelClusterCollectionNew>();
+
+    // Hunyadi
+    auto secondaryOutput = std::make_unique<SiPixelClusterCollectionNew>();
+
     //FIXME: put a reserve() here
 
     // Step C: Iterate over DetIds and invoke the pixel clusterizer algorithm

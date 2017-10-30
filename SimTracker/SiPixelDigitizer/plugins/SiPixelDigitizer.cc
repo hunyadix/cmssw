@@ -107,6 +107,9 @@ namespace cms
     
     mixMod.produces<edm::DetSetVector<PixelDigi> >().setBranchAlias(alias);
     mixMod.produces<edm::DetSetVector<PixelDigiSimLink> >().setBranchAlias(alias + "siPixelDigiSimLink");
+#ifdef MARK_SPLIT_CLUSTERS
+  mixMod.produces<edm::DetSetVector<PixelDigi>>("dcolLostNeighbourDigiFlags").setBranchAlias(alias);
+#endif
     for(auto const& trackerContainer : trackerContainers) {
       edm::InputTag tag(hitsProducer, trackerContainer);
       iC.consumes<std::vector<PSimHit> >(edm::InputTag(hitsProducer, trackerContainer));
@@ -256,7 +259,9 @@ namespace cms
 
     std::vector<edm::DetSet<PixelDigi> > theDigiVector;
     std::vector<edm::DetSet<PixelDigiSimLink> > theDigiLinkVector;
- 
+#ifdef MARK_SPLIT_CLUSTERS
+    std::vector<edm::DetSet<PixelDigi>> theDcolLostNeighbourPixelFlagVector;
+#endif
     PileupInfo_ = getEventPileupInfo();
     if (firstFinalizeEvent_) {
       const unsigned int bunchspace = PileupInfo_->getMix_bunchSpacing();
@@ -273,14 +278,22 @@ namespace cms
 
         edm::DetSet<PixelDigi> collector((*iu)->geographicalId().rawId());
         edm::DetSet<PixelDigiSimLink> linkcollector((*iu)->geographicalId().rawId());
-        
+#ifdef MARK_SPLIT_CLUSTERS
+        edm::DetSet<PixelDigi> dcolLostNeighbourDigiFlagsCollector((*iu)->geographicalId().rawId());
+#endif
         
         _pixeldigialgo->digitize(dynamic_cast<const PixelGeomDetUnit*>((*iu)),
                                  collector.data,
+#ifdef MARK_SPLIT_CLUSTERS
+                                 dcolLostNeighbourDigiFlagsCollector.data,
+#endif
                                  linkcollector.data,
 				 tTopo,
                                  engine);
         if(collector.data.size() > 0) {
+#ifdef MARK_SPLIT_CLUSTERS
+          theDcolLostNeighbourPixelFlagVector.push_back(std::move(dcolLostNeighbourDigiFlagsCollector));
+#endif
           theDigiVector.push_back(std::move(collector));
         }
         if(linkcollector.data.size() > 0) {
@@ -294,10 +307,17 @@ namespace cms
       output(new edm::DetSetVector<PixelDigi>(theDigiVector) );
     std::unique_ptr<edm::DetSetVector<PixelDigiSimLink> > 
       outputlink(new edm::DetSetVector<PixelDigiSimLink>(theDigiLinkVector) );
+#ifdef MARK_SPLIT_CLUSTERS
+    std::unique_ptr<edm::DetSetVector<PixelDigi>>
+      flagsOutput(new edm::DetSetVector<PixelDigi>(theDcolLostNeighbourPixelFlagVector));
+#endif
 
     // Step D: write output to file 
     iEvent.put(std::move(output));
     iEvent.put(std::move(outputlink));
+#ifdef MARK_SPLIT_CLUSTERS
+    iEvent.put(std::move(flagsOutput), "dcolLostNeighbourDigiFlags");
+#endif
   }
 
   CLHEP::HepRandomEngine* SiPixelDigitizer::randomEngine(edm::StreamID const& streamID) {

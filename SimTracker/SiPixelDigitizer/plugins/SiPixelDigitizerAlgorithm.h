@@ -1,6 +1,8 @@
 #ifndef SiPixelDigitizerAlgorithm_h
 #define SiPixelDigitizerAlgorithm_h
 
+#define MARK_SPLIT_CLUSTERS
+
 #include <map>
 #include <memory>
 #include <vector>
@@ -64,6 +66,9 @@ class SiPixelDigitizerAlgorithm  {
                          CLHEP::HepRandomEngine*);
   void digitize(const PixelGeomDetUnit *pixdet,
                 std::vector<PixelDigi>& digis,
+#ifdef MARK_SPLIT_CLUSTERS
+                std::vector<PixelDigi>& digiDcolLostFlags,
+#endif
                 std::vector<PixelDigiSimLink>& simlinks,
 		const TrackerTopology *tTopo,
                 CLHEP::HepRandomEngine*);
@@ -278,6 +283,9 @@ class SiPixelDigitizerAlgorithm  {
 
     // Contains the accumulated hit info.
     signalMaps _signal;
+#ifdef MARK_SPLIT_CLUSTERS
+    std::set<std::pair<int, int>> dcolDisabledPositions;
+#endif
 
     const bool makeDigiSimLinks_;
 

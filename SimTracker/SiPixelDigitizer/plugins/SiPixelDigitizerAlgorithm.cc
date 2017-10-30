@@ -673,6 +673,9 @@ void SiPixelDigitizerAlgorithm::calculateInstlumiFactor(PileupMixingContent* puI
 //============================================================================
 void SiPixelDigitizerAlgorithm::digitize(const PixelGeomDetUnit* pixdet,
                                          std::vector<PixelDigi>& digis,
+#ifdef MARK_SPLIT_CLUSTERS
+                                         std::vector<PixelDigi>& digiDcolLostFlags,
+#endif
                                          std::vector<PixelDigiSimLink>& simlinks,
 					 const TrackerTopology *tTopo,
                                          CLHEP::HepRandomEngine* engine) {
@@ -750,6 +753,25 @@ void SiPixelDigitizerAlgorithm::digitize(const PixelGeomDetUnit* pixdet,
   
   make_digis(thePixelThresholdInE, detID, pixdet, digis, simlinks, tTopo);
   
+#ifdef MARK_SPLIT_CLUSTERS
+  digiDcolLostFlags.clear();
+  for(const auto& digi: digis)
+  {
+    int flags = 0;
+    for(int d_col = -1; d_col <= 1; d_col++)
+    {
+      for(int d_row = -1; d_row <= 1; d_row++)
+      {
+        if(d_col == 0 && d_row == 0) continue;
+        if(dcolDisabledPositions.find(std::make_pair(digi.row() + d_row, digi.column() + d_col)) == dcolDisabledPositions.end()) continue;
+        int bit = d_col + 1 + (d_row + 1) * 3-int(d_row > 0 || (d_col > 0 && d_row == 0));
+        flags |= 1 << bit;
+      }
+    }
+    digiDcolLostFlags.emplace_back(digi.row(), digi.column(), flags);
+  }
+#endif
+
 #ifdef TP_DEBUG
   LogDebug ("PixelDigitizer") << "[SiPixelDigitizerAlgorithm] converted " << digis.size() << " PixelDigis in DetUnit" << detID;
 #endif
@@ -1584,8 +1606,10 @@ void SiPixelDigitizerAlgorithm::pixel_inefficiency(const PixelEfficiencies& eff,
   
   // Now loop again over pixels to kill some of them.
   // Loop over hit pixels, amplitude in electrons, channel = coded row,col
+#ifdef MARK_SPLIT_CLUSTERS
+    dcolDisabledPositions.clear();
+#endif
   for(signal_map_iterator i = theSignal.begin();i != theSignal.end(); ++i) {
-    
     //    int chan = i->first;
     std::pair<int,int> ip = PixelDigi::channelToPixel(i->first);//get pixel pos
     int row = ip.first;  // X in row
@@ -1600,6 +1624,10 @@ void SiPixelDigitizerAlgorithm::pixel_inefficiency(const PixelEfficiencies& eff,
     float rand  = CLHEP::RandFlat::shoot(engine);
     if( chips[chipIndex]==0 || columns[dColInDet]==0
 	|| rand>pixelEfficiency ) {
+#ifdef MARK_SPLIT_CLUSTERS
+      // dcolDisabledChannels.insert(i -> first);
+      dcolDisabledPositions.insert(std::make_pair(row, col));
+#endif
       // make pixel amplitude =0, pixel will be lost at clusterization
       i->second.set(0.); // reset amplitude,
     } // end if
